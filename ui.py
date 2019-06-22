@@ -111,7 +111,7 @@ class Application:
         self.classify_result_message['fg'] = 'black'
 
         if not self.VerifyFile():
-            self.error_message['text'] = 'File chosen isn\'t a pdf file.'
+            self.error_message['text'] = 'File chosen isn\'t a pdf or jpg file.'
             self.error_message['fg'] = 'red'
             return
         elif not self.VerifyFolder():
@@ -140,7 +140,7 @@ class Application:
         self.filepath_message['text'] = self.filepath
 
     def VerifyFile(self):
-        if not self.filepath or not self.filepath.endswith('pdf'):
+        if (not self.filepath) or not (self.filepath.endswith('pdf') or self.filepath.endswith('jpg')):
             return False
         return True
     def VerifyFolder(self):
@@ -164,21 +164,28 @@ class Application:
                 self.classify_state = CS_ERROR
                 self.error_message['text'] = 'Failed to load model.'
                 self.error_message['fg'] = 'red'
+                self.model = None
                 return False
         
         self.classify_state = CS_CLASSIFYING
         self.classify_result_message['text'] = 'Classifying Document ...'
-        pages = self.SeparatePages(self.filepath)
-        print(pages)
+
         images = []
-        i = 0
-        for page in pages:
-            p = os.path.join(self.folderpath, str(i)) + '.jpg'
-            img = imread(p)
-            img = self.preprocess_image(img)
-            images.append(img)
-            os.remove(p)
-            i += 1
+        if self.filepath.endswith('jpg'):
+                img = imread(self.filepath)
+                img = self.preprocess_image(img)
+                images.append(img)
+        else:
+                pages = self.SeparatePages(self.filepath)
+                print(pages)
+                i = 0
+                for page in pages:
+                    p = os.path.join(self.folderpath, str(i)) + '.jpg'
+                    img = imread(p)
+                    img = self.preprocess_image(img)
+                    images.append(img)
+                    os.remove(p)
+                    i += 1
         images = np.asarray(images)
         print(images.shape)
         y_pred = self.model.predict(images)

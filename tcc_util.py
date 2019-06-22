@@ -13,13 +13,40 @@ from sklearn.metrics import classification_report, confusion_matrix
 
     :param frame: RGBA frame
 """    
-def preprocess_image(frame, image_pp_size):
+def preprocess_image(frame, image_pp_size, section = 'whole'):
     
     # Normalize Pixel Values
     normalized_frame = frame/255.0 - 0.5
+
+    # Crop
+    cropped = normalized_frame
+    if section == 'header':
+        x1 = 0
+        x2 = normalized_frame.shape[0]
+        y1 = 0
+        y2 = normalized_frame.shape[1] // 3
+        cropped = normalized_frame[x1:x2,y1:y2]
+    elif section == 'footer':
+        x1 = 0
+        x2 = normalized_frame.shape[0]
+        y1 = normalized_frame.shape[1] - (normalized_frame.shape[1] // 3)
+        y2 = normalized_frame.shape[1]
+        cropped = normalized_frame[x1:x2,y1:y2]
+    elif section == 'left':
+        x1 = 0
+        x2 = normalized_frame.shape[0] // 2
+        y1 = 0
+        y2 = normalized_frame.shape[1]
+        cropped = normalized_frame[x1:x2,y1:y2]
+    elif section == 'right':
+        x1 = normalized_frame.shape[0] // 2
+        x2 = normalized_frame.shape[0]
+        y1 = 0
+        y2 = normalized_frame.shape[1]
+        cropped = normalized_frame[x1:x2,y1:y2]
     
     # Resize
-    preprocessed_frame = transform.resize(normalized_frame, image_pp_size)
+    preprocessed_frame = transform.resize(cropped, image_pp_size)
     
     # Create a 3-Channel image
     final_image = np.dstack((preprocessed_frame, preprocessed_frame, preprocessed_frame))
@@ -32,8 +59,8 @@ def preprocess_image(frame, image_pp_size):
     :param labels: 1D label list
 """
 
-def make_labels(labels):
-    np_labels = np.zeros((len(labels), 16))
+def make_labels(labels, n=16):
+    np_labels = np.zeros((len(labels), n))
     
     for i in range(len(labels)):
         np_labels[i, labels[i]] = 1
